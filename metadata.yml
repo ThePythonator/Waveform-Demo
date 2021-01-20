@@ -1,5 +1,5 @@
 title: Waveform Demo
-description: game description
+description: A demo of the 32blit's waveform generator.
 author: ThePythonator
 splash:
   file: assets/no-image.png
