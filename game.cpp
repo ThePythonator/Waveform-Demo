@@ -68,6 +68,34 @@ void init() {
     channels[3].decay_ms = 400;
     channels[3].sustain = 0;
     channels[3].release_ms = 5;
+
+    channels[4].waveforms = Waveform::NOISE;
+    channels[4].frequency = 7700;
+    channels[4].attack_ms = 5;
+    channels[4].decay_ms = 350;
+    channels[4].sustain = 0;
+    channels[4].release_ms = 5;
+
+    channels[5].waveforms = Waveform::NOISE;
+    channels[5].frequency = 0;
+    channels[5].attack_ms = 5;
+    channels[5].decay_ms = 250;
+    channels[5].sustain = 0;
+    channels[5].release_ms = 5;
+
+    channels[6].waveforms = Waveform::TRIANGLE;
+    channels[6].frequency = 1400;
+    channels[6].attack_ms = 5;
+    channels[6].decay_ms = 100;
+    channels[6].sustain = 0;
+    channels[6].release_ms = 5;
+
+    channels[7].waveforms = Waveform::SINE;
+    channels[7].frequency = 0;
+    channels[7].attack_ms = 5;
+    channels[7].decay_ms = 700;
+    channels[7].sustain = 0;
+    channels[7].release_ms = 5;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -156,20 +184,30 @@ void update(uint32_t time) {
         else if (buttons.pressed & Button::DPAD_UP) {
             current_sound = UP_SOUND;
 
+            channels[4].trigger_attack();
+
             start_time = time;
         }
         else if (buttons.pressed & Button::DPAD_RIGHT) {
             current_sound = RIGHT_SOUND;
+
+            channels[5].trigger_attack();
+            sound_sweep = 1.0f;
 
             start_time = time;
         }
         else if (buttons.pressed & Button::DPAD_DOWN) {
             current_sound = DOWN_SOUND;
 
+            channels[6].trigger_attack();
+
             start_time = time;
         }
         else if (buttons.pressed & Button::DPAD_LEFT) {
             current_sound = LEFT_SOUND;
+
+            channels[7].trigger_attack();
+            sound_sweep = 1.0f;
 
             start_time = time;
         }
@@ -236,15 +274,39 @@ void update(uint32_t time) {
         break;
 
     case UP_SOUND:
-        break;
-
-    case DOWN_SOUND:
-        break;
-
-    case LEFT_SOUND:
+        if (sound_time > 350) {
+            current_sound = NO_SOUND;
+            channels[4].trigger_release();
+        }
         break;
 
     case RIGHT_SOUND:
+        if (sound_time > 250) {
+            current_sound = NO_SOUND;
+            channels[5].trigger_release();
+        }
+        else {
+            channels[5].frequency = (3000.0f * sound_sweep) - 800;
+            sound_sweep -= 0.05f;
+        }
+        break;
+
+    case DOWN_SOUND:
+        if (sound_time > 100) {
+            current_sound = NO_SOUND;
+            channels[6].trigger_release();
+        }
+        break;
+
+    case LEFT_SOUND:
+        if (sound_time > 700) {
+            current_sound = NO_SOUND;
+            channels[7].trigger_release();
+        }
+        else {
+            channels[7].frequency = (3000.0f * sound_sweep) - 800;
+            sound_sweep -= 0.05f;
+        }
         break;
 
     default:
