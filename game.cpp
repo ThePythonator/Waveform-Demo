@@ -2,6 +2,34 @@
 
 using namespace blit;
 
+enum CurrentSound {
+    NO_SOUND,
+    A_SOUND,
+    B_SOUND,
+    X_SOUND,
+    Y_SOUND,
+    UP_SOUND,
+    DOWN_SOUND,
+    LEFT_SOUND,
+    RIGHT_SOUND
+};
+
+// current_sound determines which sound is currently playing.
+// -1 indicates no sound.
+CurrentSound current_sound = NO_SOUND;
+
+// sound_sweep is used when changing the frequency of the waveform during playback
+float sound_sweep = 0.0f;
+
+// start_time is used to calculate how long a waveform has been playing for (e.g. to do frequency jumps)
+uint32_t start_time = 0;
+
+// frequency_jump_done is used to check if we've jumped the frequency yet
+bool frequency_jump_done = false;
+
+// sound_time is used to store how long a waveform has been playing for
+uint32_t sound_time = 0;
+
 ///////////////////////////////////////////////////////////////////////////
 //
 // init()
@@ -10,11 +38,37 @@ using namespace blit;
 //
 void init() {
     set_screen_mode(ScreenMode::lores);
-}
 
-// current_sound determines which sound is currently playing.
-// -1 indicates no sound.
-int current_sound = -1;
+    // Set up waveform presets.
+
+    channels[0].waveforms = Waveform::SQUARE;
+    channels[0].frequency = 0;
+    channels[0].attack_ms = 5;
+    channels[0].decay_ms = 400;
+    channels[0].sustain = 0;
+    channels[0].release_ms = 5;
+
+    channels[1].waveforms = Waveform::TRIANGLE;
+    channels[1].frequency = 0;
+    channels[1].attack_ms = 5;
+    channels[1].decay_ms = 300;
+    channels[1].sustain = 0;
+    channels[1].release_ms = 5;
+
+    channels[2].waveforms = Waveform::TRIANGLE;
+    channels[2].frequency = 800;
+    channels[2].attack_ms = 5;
+    channels[2].decay_ms = 500;
+    channels[2].sustain = 0;
+    channels[2].release_ms = 5;
+
+    channels[3].waveforms = Waveform::TRIANGLE;
+    channels[3].frequency = 0;
+    channels[3].attack_ms = 5;
+    channels[3].decay_ms = 400;
+    channels[3].sustain = 0;
+    channels[3].release_ms = 5;
+}
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -36,14 +90,16 @@ void render(uint32_t time) {
     screen.text("Press a button to", minimal_font, Point(5, 24));
     screen.text("play a sound", minimal_font, Point(5, 32));
 
-    if (current_sound != -1) {
+    std::string text = "Current sound: ";
+
+    if (current_sound != NO_SOUND) {
         // A sound is playing currently.
         // Display text indicating which sound.
 
-        std::string text = "Current sound: ";
         text.append(std::to_string(current_sound));
-        screen.text(text, minimal_font, Point(5, 48));
     }
+
+    screen.text(text, minimal_font, Point(5, 48));
 
     screen.pen = Pen(0, 0, 0);
     screen.text("Waveform Demo", minimal_font, Point(5, 4));
@@ -57,62 +113,142 @@ void render(uint32_t time) {
 // amount if milliseconds elapsed since the start of your game
 //
 void update(uint32_t time) {
-    // Generate a sound if a button is pressed.
-    //
-    // Only detect one button press at a time (by using else if) because reasons.
+    if (current_sound == NO_SOUND) {
+        // No sound is currently playing, let's see if we need to play a sound now...
+        
+        // Generate a sound if a button is pressed (and only if no other sounds are playing).
+        
+        // Only detect one button press at a time (by using else if) because reasons.
 
-    if (buttons.pressed & Button::X) {
-        current_sound = 0;
+        if (buttons.pressed & Button::X) {
+            current_sound = X_SOUND;
+
+            channels[0].trigger_attack();
+            sound_sweep = 1.0f;
+
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::A) {
+            current_sound = A_SOUND;
+
+            channels[1].trigger_attack();
+            sound_sweep = 1.0f;
+
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::B) {
+            current_sound = B_SOUND;
+
+            channels[2].frequency = 800;
+            channels[2].trigger_attack();
+
+            frequency_jump_done = false;
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::Y) {
+            current_sound = Y_SOUND;
+
+            channels[3].trigger_attack();
+            sound_sweep = 1.0f;
+
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::DPAD_UP) {
+            current_sound = UP_SOUND;
+
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::DPAD_RIGHT) {
+            current_sound = RIGHT_SOUND;
+
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::DPAD_DOWN) {
+            current_sound = DOWN_SOUND;
+
+            start_time = time;
+        }
+        else if (buttons.pressed & Button::DPAD_LEFT) {
+            current_sound = LEFT_SOUND;
+
+            start_time = time;
+        }
     }
-    else if (buttons.pressed & Button::A) {
-        current_sound = 1;
+
+    if (current_sound == NO_SOUND) {
+        sound_time = 0;
     }
-    else if (buttons.pressed & Button::B) {
-        current_sound = 2;
-    }
-    else if (buttons.pressed & Button::Y) {
-        current_sound = 3;
-    }
-    else if (buttons.pressed & Button::DPAD_UP) {
-        current_sound = 4;
-    }
-    else if (buttons.pressed & Button::DPAD_RIGHT) {
-        current_sound = 5;
-    }
-    else if (buttons.pressed & Button::DPAD_DOWN) {
-        current_sound = 6;
-    }
-    else if (buttons.pressed & Button::DPAD_LEFT) {
-        current_sound = 7;
+    else {
+        sound_time = time - start_time;
     }
 
     // Update the sounds which are playing.
     switch (current_sound) {
-    case 0:
+    case X_SOUND:
+        if (sound_sweep > 0.0f) {
+            // Update the sweep
+
+            channels[0].frequency = 1000 - (400.0f * sound_sweep);
+            sound_sweep -= 0.01f;
+        }
+        else {
+            current_sound = NO_SOUND;
+            channels[0].trigger_release();
+        }
         break;
 
-    case 1:
+    case A_SOUND:
+        if (sound_sweep > 0.0f) {
+            // Update the sweep
+
+            channels[1].frequency = 1300 - (1000.0f * sound_sweep);
+            sound_sweep -= 0.01f;
+        }
+        else {
+            current_sound = NO_SOUND;
+            channels[1].trigger_release();
+        }
         break;
 
-    case 2:
+    case B_SOUND:
+        if (sound_time > 500) {
+            current_sound = NO_SOUND;
+            channels[2].trigger_release();
+        }
+        else if (sound_time > 200 && !frequency_jump_done) {
+            // Jump the frequency by 60%
+            channels[2].frequency *= 1.6;
+            frequency_jump_done = true;
+        }
         break;
 
-    case 3:
+    case Y_SOUND:
+        if (sound_sweep > 0.0f) {
+            // Update the sweep
+
+            channels[3].frequency = 1300.0f * sound_sweep;
+            sound_sweep -= 0.01f;
+        }
+        else {
+            current_sound = NO_SOUND;
+            channels[3].trigger_release();
+        }
         break;
 
-    case 4:
+    case UP_SOUND:
         break;
 
-    case 5:
+    case DOWN_SOUND:
         break;
 
-    case 6:
+    case LEFT_SOUND:
         break;
 
-    case 7:
+    case RIGHT_SOUND:
         break;
 
     default:
+        // No sound playing
         break;
     }
 }
