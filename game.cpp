@@ -223,33 +223,34 @@ void update(uint32_t time) {
     // Update the sounds which are playing.
     switch (current_sound) {
     case X_SOUND:
-        if (sound_sweep > 0.0f) {
-            // Update the sweep
-
-            channels[0].frequency = 1000 - (400.0f * sound_sweep);
-            sound_sweep -= 0.01f;
-        }
-        else {
+        if (sound_time > 400) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[0].trigger_release();
+        }
+        else {
+            // Update the sweep
+            channels[0].frequency = 1000 - (400.0f * sound_sweep);
+            sound_sweep -= 0.01f;
         }
         break;
 
     case A_SOUND:
-        if (sound_sweep > 0.0f) {
-            // Update the sweep
-
-            channels[1].frequency = 1300 - (1000.0f * sound_sweep);
-            sound_sweep -= 0.01f;
-        }
-        else {
+        if (sound_time > 300) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[1].trigger_release();
+        }
+        else {
+            // Update the sweep
+            channels[1].frequency = 1300 - (1000.0f * sound_sweep);
+            sound_sweep -= 0.01f;
         }
         break;
 
     case B_SOUND:
         if (sound_time > 500) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[2].trigger_release();
         }
@@ -261,20 +262,21 @@ void update(uint32_t time) {
         break;
 
     case Y_SOUND:
-        if (sound_sweep > 0.0f) {
-            // Update the sweep
-
-            channels[3].frequency = 1300.0f * sound_sweep;
-            sound_sweep -= 0.01f;
-        }
-        else {
+        if (sound_time > 400) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[3].trigger_release();
+        }
+        else {
+            // Update the sweep
+            channels[3].frequency = 1300.0f * sound_sweep;
+            sound_sweep -= 0.01f;
         }
         break;
 
     case UP_SOUND:
         if (sound_time > 350) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[4].trigger_release();
         }
@@ -282,10 +284,12 @@ void update(uint32_t time) {
 
     case RIGHT_SOUND:
         if (sound_time > 250) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[5].trigger_release();
         }
         else {
+            // Update the sweep
             channels[5].frequency = (3000.0f * sound_sweep) - 800;
             sound_sweep -= 0.05f;
         }
@@ -293,6 +297,7 @@ void update(uint32_t time) {
 
     case DOWN_SOUND:
         if (sound_time > 100) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[6].trigger_release();
         }
@@ -300,10 +305,12 @@ void update(uint32_t time) {
 
     case LEFT_SOUND:
         if (sound_time > 700) {
+            // Stop sound
             current_sound = NO_SOUND;
             channels[7].trigger_release();
         }
         else {
+            // Update the sweep
             channels[7].frequency = (3000.0f * sound_sweep) - 800;
             sound_sweep -= 0.05f;
         }
